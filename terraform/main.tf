@@ -18,6 +18,7 @@ provider "aws" {
   region = var.region
 }
 
+// a random uuid is provided here to ensure that buckets are unique acr
 resource "random_uuid" "uuid" {}
 
 module "buckets" {
@@ -52,6 +53,7 @@ EOT
   depends_on = [module.buckets]
 }
 
+// origin access controll is managed here because it does not need to be created for each cloudfront instance
 resource "aws_cloudfront_origin_access_control" "content_buckets_origin_acl" {
   name                              = "content-buckets-oac"
   signing_behavior                  = "always"
