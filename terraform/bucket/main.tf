@@ -27,6 +27,8 @@ resource "aws_s3_bucket_versioning" "buckets_versioning" {
 
 resource "aws_kms_key" "encryption_key" {
   deletion_window_in_days = 10
+
+  tags = var.tags
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "server_side_encryption" {

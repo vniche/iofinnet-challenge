@@ -1,25 +1,12 @@
-terraform {
-  # uncomment if you want to use s3 as backend for state management and persistent
-  # backend "s3" {}
+// a random uuid is provided here to ensure that buckets are unique across all AWS systems
+resource "random_uuid" "uuid" {}
 
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.23.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.5.1"
-    }
+locals {
+  app_tags = {
+    "application" : var.application
+    "environment" : terraform.workspace
   }
 }
-
-provider "aws" {
-  region = var.region
-}
-
-// a random uuid is provided here to ensure that buckets are unique acr
-resource "random_uuid" "uuid" {}
 
 module "buckets" {
   for_each = toset(var.buckets)
@@ -27,6 +14,8 @@ module "buckets" {
   source      = "./bucket"
   bucket_name = each.value
   uuid        = random_uuid.uuid.id
+
+  tags = merge(var.tags, local.app_tags)
 }
 
 resource "aws_s3_object" "buckets_pages" {
@@ -35,7 +24,7 @@ resource "aws_s3_object" "buckets_pages" {
   bucket       = "${each.value}-${random_uuid.uuid.id}-${terraform.workspace}"
   key          = "${each.value}/index.html"
   content_type = "text/html"
-  content      = <<EOT
+  content      = <<EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,7 +37,9 @@ resource "aws_s3_object" "buckets_pages" {
   </header>
 </body>
 </html>
-EOT
+EOF
+
+  tags = merge(var.tags, local.app_tags)
 
   depends_on = [module.buckets]
 }
@@ -61,7 +52,7 @@ resource "aws_cloudfront_origin_access_control" "content_buckets_origin_acl" {
   origin_access_control_origin_type = "s3"
 }
 
-module "cloudfront" {
+module "cloudfront_distributions" {
   for_each = toset(var.buckets)
 
   source                   = "./cloudfront"
@@ -71,9 +62,28 @@ module "cloudfront" {
   origin_access_control_id = aws_cloudfront_origin_access_control.content_buckets_origin_acl.id
   bucket_encryption_key_id = module.buckets[each.value].encryption_key_id
 
+  tags = merge(var.tags, local.app_tags)
+
   depends_on = [module.buckets, aws_s3_object.buckets_pages]
 }
 
-output "cloudfront_urls" {
-  value = module.cloudfront
+locals {
+  bucket_arns = [
+    for bucket in module.buckets :
+    bucket.bucket_arn
+  ]
+
+  cloudfront_distribution_arns = [
+    for distributions in module.cloudfront_distributions :
+    distributions.cloudfront_distribution_arn
+  ]
+}
+
+module "iam" {
+  source                       = "./iam"
+  bucket_arns                  = local.bucket_arns
+  cloudfront_distribution_arns = local.cloudfront_distribution_arns
+  application                  = var.application
+
+  tags = merge(var.tags, local.app_tags)
 }

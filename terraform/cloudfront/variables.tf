@@ -27,7 +27,4 @@ variable "origin_access_control_id" {
 variable "tags" {
   type        = map(string)
   description = "Tags for managed resources"
-  default = {
-    "managed-by" = "terraform"
-  }
 }

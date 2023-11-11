@@ -11,7 +11,4 @@ variable "bucket_name" {
 variable "tags" {
   type        = map(string)
   description = "Tags for managed resources"
-  default = {
-    "managed-by" = "terraform"
-  }
 }

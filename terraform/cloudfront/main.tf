@@ -1,6 +1,6 @@
-
-
 data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
 
 resource "aws_cloudfront_distribution" "cloudfront_distribution" {
   origin {
@@ -34,11 +34,11 @@ resource "aws_cloudfront_distribution" "cloudfront_distribution" {
     }
   }
 
-  tags = var.tags
-
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+
+  tags = var.tags
 }
 
 resource "aws_s3_bucket_policy" "cloudfront_bucket_policy" {
@@ -62,8 +62,6 @@ resource "aws_s3_bucket_policy" "cloudfront_bucket_policy" {
     Version = "2012-10-17"
   })
 }
-
-data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key_policy" "cloudfront_kms_policy" {
   key_id = var.bucket_encryption_key_id
