@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  application:
+    image: {{ hostvars[inventory_hostname]['app_image'] }}
+    restart: unless-stopped
+    ports:
+      - "{{ hostvars[inventory_hostname]['port_range'] }}:80"
+    volumes:
+       - data:/var/lib/data
+    environment:
+      - TUNING="{{ hostvars[inventory_hostname]['tuning'] }}"
+      - DEBUG="{{ hostvars[inventory_hostname]['debug'] }}"
+      - EXTERNAL_URL="{{ hostvars[inventory_hostname]['external_url'] }}"
+      - CLIENT="{{ hostvars[inventory_hostname]['client'] }}"
+      - INTERACTION_MODE="{{ hostvars[inventory_hostname]['interaction_mode'] }}"
+      - DEVICE_ID="{{ hostvars[inventory_hostname]['device_id'] }}"
+      - SOME_SECRET=/run/secrets/some_secret
+    secrets:
+      - some_secret
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "-i", "http://localhost:80/"]
+    deploy:
+      mode: replicated
+      replicas: 3
+      resources:
+        limits:
+          cpus: '.3'
+          memory: 1G
+
+secrets:
+   some_secret:
+     file: some_secret.txt
+
+volumes:
+    data:

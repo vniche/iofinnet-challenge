@@ -1,0 +1,33 @@
+---
+- hosts: '{{ host_group | default("all") }}'
+  gather_facts: false
+  tasks:
+    - name: ensure packages are up-to-date
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+      become: true
+
+    - name: ensure ca-certificates are up-to-date
+      ansible.builtin.apt:
+        name: "ca-certificates"
+        state: latest
+      become: true
+
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: files/some_secret.txt
+        dest: ~/some_secret.txt
+        mode: 0644
+      register: secret
+
+    - name: ensure docker-compose.yaml is created
+      ansible.builtin.template:
+        src: docker-compose.yaml.j2
+        dest: ~/docker-compose.yaml
+        mode: 0644
+      register: compose_config
+
+    - name: ensure docker-compose services are up
+      ansible.builtin.shell: docker compose up -d
+      when: compose_config.changed or secret.changed
