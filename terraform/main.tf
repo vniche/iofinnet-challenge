@@ -18,6 +18,7 @@ module "buckets" {
   tags = merge(var.tags, local.app_tags)
 }
 
+// sample pages as examples
 resource "aws_s3_object" "buckets_pages" {
   for_each = toset(var.buckets)
 

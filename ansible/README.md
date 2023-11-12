@@ -24,3 +24,7 @@ As a complementary playbook, `down.yaml` provides a playbook to stop the provisi
 1. Ensures docker-compose services are down through `docker compose down`.
 2. Given the proper condition, deletes the persistent volumes created by the `up.yaml` playbook. Usage:
     - `ansible-playbook -i inventory/hosts down.yaml -e 'clear_data=true'`
+
+## Considerations
+
+For the docker-compose configuration, a service per server was chosen because of a limitation of the tool, which is when using `deploy.replicas` higher then 1, the volume defined in the configuration will be the same for all the instances, and having several volumes and services was used to workaround such limitation.
