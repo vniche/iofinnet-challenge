@@ -6,7 +6,8 @@ debug="true"
 external_url="https://dev/approve"
 client="dev_client_external"
 device_id="2346456"
-port_range="8000-8002"
+api_port_prefix="400"
+console_port_prefix="600"
 
 [staging]
 host2
@@ -16,9 +17,10 @@ debug="false"
 external_url="https://staging/approve"
 client="staging_client_external"
 device_id="32443532"
-port_range="8003-8005"
+api_port_prefix="800"
+console_port_prefix="900"
 
 [all:vars]
 tuning="true"
 interaction_mode="API"
-app_image="nginx:latest"
+container_image="minio/minio:RELEASE.2023-11-06T22-26-08Z"

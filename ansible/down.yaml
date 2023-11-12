@@ -1,0 +1,15 @@
+---
+- hosts: '{{ host_group | default("all") }}'
+  gather_facts: false
+  tasks:
+    - name: ensure docker-compose services are down
+      ansible.builtin.shell: docker compose down
+      args:
+        chdir: ~/cluster
+
+    - name: clear volumes
+      ansible.builtin.shell: docker volume rm -f cluster_data{{ item }}
+      args:
+        chdir: ~/cluster
+      with_sequence: 0-2
+      when: clear_data | default(false)

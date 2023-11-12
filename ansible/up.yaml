@@ -14,20 +14,28 @@
         state: latest
       become: true
 
-    - name: Copy file with owner and permissions
+    - name: create the directory if it does not exist
+      ansible.builtin.file:
+        path: ~/cluster
+        state: directory
+        mode: 0755
+
+    - name: copy secret file
       ansible.builtin.copy:
-        src: files/some_secret.txt
-        dest: ~/some_secret.txt
+        src: files/minio_password
+        dest: ~/cluster/minio_password
         mode: 0644
       register: secret
 
     - name: ensure docker-compose.yaml is created
       ansible.builtin.template:
         src: docker-compose.yaml.j2
-        dest: ~/docker-compose.yaml
+        dest: ~/cluster/docker-compose.yaml
         mode: 0644
       register: compose_config
 
     - name: ensure docker-compose services are up
       ansible.builtin.shell: docker compose up -d
-      when: compose_config.changed or secret.changed
+      args:
+        chdir: ~/cluster
+      when: compose_config.changed or secret.changed or force_up | default(false)
